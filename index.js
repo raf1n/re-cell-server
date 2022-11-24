@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 require("dotenv").config();
 const app = express();
@@ -25,9 +26,19 @@ const client = new MongoClient(uri, {
 // collections
 const categoriesCollection = client.db("reCell").collection("categories");
 const productsCollection = client.db("reCell").collection("products");
+const usersCollection = client.db("reCell").collection("users");
+
+app.post("/users", async (req, res) => {
+  try {
+    const user = req.body;
+    const result = await usersCollection.insertOne(user);
+    res.send(result);
+  } catch (error) {
+    console.error(error);
+  }
+});
 
 // products category
-
 app.get("/categories", async (req, res) => {
   try {
     const result = await categoriesCollection.find({}).toArray();
