@@ -55,6 +55,20 @@ app.get("/categories/:id", async (req, res) => {
   }
 });
 
+// individual products
+
+app.get("/products/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { _id: ObjectId(id) };
+    const result = await productsCollection.findOne(query);
+    res.send({
+      status: "success",
+      data: result,
+    });
+  } catch (error) {}
+});
+
 app.listen(port, () => {
   console.log(`server running on ${port}`);
 });
