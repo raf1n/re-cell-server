@@ -40,6 +40,21 @@ app.get("/categories", async (req, res) => {
   }
 });
 
+// individual category products
+app.get("/categories/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = { categoryId: id };
+    const result = await productsCollection.find(query).toArray();
+    res.send({
+      status: "success",
+      data: result,
+    });
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
 app.listen(port, () => {
   console.log(`server running on ${port}`);
 });
