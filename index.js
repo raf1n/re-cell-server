@@ -102,8 +102,19 @@ app.get("/categories/:id", async (req, res) => {
   }
 });
 
-// individual products
+// product post by seller
 
+app.post("/products", async (req, res) => {
+  try {
+    const productData = req.body;
+    const result = await productsCollection.insertOne(productData);
+    res.send(result);
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
+// individual products
 app.get("/products/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -137,8 +148,9 @@ app.get("/bookings", async (req, res) => {
   const email = req.query.email;
   const query = { buyerEmail: email };
   const result = await bookingsCollection.find(query).toArray();
-  res.send(result)
+  res.send(result);
 });
+
 app.listen(port, () => {
   console.log(`server running on ${port}`);
 });
