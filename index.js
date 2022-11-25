@@ -114,6 +114,30 @@ app.post("/products", async (req, res) => {
   }
 });
 
+// get products by email
+
+app.get("/products", async (req, res) => {
+  try {
+    const email = req.query.email;
+    const query = { sellerEmail: email };
+    const result = await productsCollection.find(query).toArray();
+    res.send(result);
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
+// delete product
+app.delete("/products/:id", async (req, res) => {
+  try {
+    const id = req.params;
+    const filter = { _id: ObjectId(id) };
+    const result = await productsCollection.deleteOne(filter);
+    res.send(result);
+  } catch (error) {
+    console.error(error.message);
+  }
+});
 // individual products
 app.get("/products/:id", async (req, res) => {
   try {
