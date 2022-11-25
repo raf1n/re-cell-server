@@ -27,6 +27,7 @@ const client = new MongoClient(uri, {
 const categoriesCollection = client.db("reCell").collection("categories");
 const productsCollection = client.db("reCell").collection("products");
 const usersCollection = client.db("reCell").collection("users");
+const bookingsCollection = client.db("reCell").collection("bookings");
 
 // get all users
 app.get("/users", async (req, res) => {
@@ -115,6 +116,29 @@ app.get("/products/:id", async (req, res) => {
   } catch (error) {}
 });
 
+// products bookings by user
+app.post("/bookings", async (req, res) => {
+  try {
+    const bookingData = req.body;
+    console.log(bookingData);
+    const result = await bookingsCollection.insertOne(bookingData);
+    res.send({
+      status: "success",
+      data: result,
+      message: `Your booking on ${bookingData?.productName} is successfull`,
+    });
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
+// get booking by email
+app.get("/bookings", async (req, res) => {
+  const email = req.query.email;
+  const query = { buyerEmail: email };
+  const result = await bookingsCollection.find(query).toArray();
+  res.send(result)
+});
 app.listen(port, () => {
   console.log(`server running on ${port}`);
 });
