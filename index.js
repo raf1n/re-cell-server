@@ -28,6 +28,7 @@ const categoriesCollection = client.db("reCell").collection("categories");
 const productsCollection = client.db("reCell").collection("products");
 const usersCollection = client.db("reCell").collection("users");
 
+// user post to db
 app.post("/users", async (req, res) => {
   try {
     const user = req.body;
@@ -36,6 +37,15 @@ app.post("/users", async (req, res) => {
   } catch (error) {
     console.error(error);
   }
+});
+
+// seller role get
+
+app.get("/users/seller/:email", async (req, res) => {
+  const email = req.params.email;
+  const query = { userEmail: email };
+  const user = await usersCollection.findOne(query);
+  res.send({ isSeller: user?.role === "Seller" });
 });
 
 // products category
