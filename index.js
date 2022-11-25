@@ -28,6 +28,16 @@ const categoriesCollection = client.db("reCell").collection("categories");
 const productsCollection = client.db("reCell").collection("products");
 const usersCollection = client.db("reCell").collection("users");
 
+// get all users
+app.get("/users", async (req, res) => {
+  try {
+    const users = await usersCollection.find({}).toArray();
+    res.send(users);
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 // user post to db
 app.post("/users", async (req, res) => {
   try {
@@ -41,18 +51,26 @@ app.post("/users", async (req, res) => {
 
 // seller role get
 app.get("/users/seller/:email", async (req, res) => {
-  const email = req.params.email;
-  const query = { userEmail: email };
-  const user = await usersCollection.findOne(query);
-  res.send({ isSeller: user?.role === "Seller" });
+  try {
+    const email = req.params.email;
+    const query = { userEmail: email };
+    const user = await usersCollection.findOne(query);
+    res.send({ isSeller: user?.role === "Seller" });
+  } catch (error) {
+    console.error(error.message);
+  }
 });
 
 //  admin role get
 app.get("/users/admin/:email", async (req, res) => {
-  const email = req.params.email;
-  const query = { userEmail: email };
-  const user = await usersCollection.findOne(query);
-  res.send({ isAdmin: user?.role === "Admin" });
+  try {
+    const email = req.params.email;
+    const query = { userEmail: email };
+    const user = await usersCollection.findOne(query);
+    res.send({ isAdmin: user?.role === "Admin" });
+  } catch (error) {
+    console.error(error.message);
+  }
 });
 
 // products category
