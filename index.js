@@ -23,6 +23,20 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+app.get("/jwt", async (req, res) => {
+  const email = req.query.email;
+  const query = { email: email };
+  const user = await usersCollection.findOne(query);
+  if (!user) {
+    res.status(403).send({ message: "Forbidden Access" });
+  } else {
+    const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, {
+      expiresIn: "1d",
+    });
+    return res.send({ token });
+  }
+});
+
 // collections
 const categoriesCollection = client.db("reCell").collection("categories");
 const productsCollection = client.db("reCell").collection("products");
@@ -38,9 +52,10 @@ app.get("/users", async (req, res) => {
       const query = { role: role };
       const result = await usersCollection.find(query).toArray();
       res.send(result);
+    } else {
+      const users = await usersCollection.find({}).toArray();
+      res.send(users);
     }
-    const users = await usersCollection.find({}).toArray();
-    res.send(users);
   } catch (error) {
     console.error(error);
   }
@@ -56,6 +71,18 @@ app.get("/user", async (req, res) => {
     console.error(error);
   }
 });
+// delete single user
+app.delete("/user/:email", async (req, res) => {
+  try {
+    const email = req.params.email;
+    const filter = { userEmail: email };
+    const result = await usersCollection.deleteOne(filter);
+    res.send(result);
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
 // make verified
 app.put("/users/:id", async (req, res) => {
   const id = req.params.id;
