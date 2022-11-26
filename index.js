@@ -136,10 +136,14 @@ app.get("/products", async (req, res) => {
 // delete product
 app.delete("/products/:id", async (req, res) => {
   try {
-    const id = req.params;
+    const id = req.params.id;
     const filter = { _id: ObjectId(id) };
-    const result = await productsCollection.deleteOne(filter);
-    res.send(result);
+    const allFilter = { productId: id };
+
+    const productResult = await productsCollection.deleteOne(filter);
+    const bookingResult = await bookingsCollection.deleteOne(allFilter);
+    const advertiseResult = await advertiesCollection.deleteOne(allFilter);
+    res.send({ productResult, bookingResult, advertiseResult });
   } catch (error) {
     console.error(error.message);
   }
