@@ -22,18 +22,22 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
-
+// get jwt
 app.get("/jwt", async (req, res) => {
-  const email = req.query.email;
-  const query = { email: email };
-  const user = await usersCollection.findOne(query);
-  if (!user) {
-    res.status(403).send({ message: "Forbidden Access" });
-  } else {
-    const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, {
-      expiresIn: "1d",
-    });
-    return res.send({ token });
+  try {
+    const email = req.query.email;
+    const query = { email: email };
+    const user = await usersCollection.findOne(query);
+    if (!user) {
+      res.status(403).send({ message: "Forbidden Access" });
+    } else {
+      const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1d",
+      });
+      return res.send({ token });
+    }
+  } catch (error) {
+    console.error(error.message);
   }
 });
 
@@ -43,6 +47,7 @@ const productsCollection = client.db("reCell").collection("products");
 const usersCollection = client.db("reCell").collection("users");
 const bookingsCollection = client.db("reCell").collection("bookings");
 const advertiesCollection = client.db("reCell").collection("advertises");
+const reportedItemCollection = client.db("reCell").collection("reporteditem");
 
 // get all users
 app.get("/users", async (req, res) => {
@@ -85,16 +90,20 @@ app.delete("/user/:email", async (req, res) => {
 
 // make verified
 app.put("/users/:id", async (req, res) => {
-  const id = req.params.id;
-  const filter = { _id: ObjectId(id) };
-  const option = { upsert: true };
-  const updatedDoc = {
-    $set: {
-      isVerified: true,
-    },
-  };
-  const result = await usersCollection.updateOne(filter, updatedDoc, option);
-  res.send(result);
+  try {
+    const id = req.params.id;
+    const filter = { _id: ObjectId(id) };
+    const option = { upsert: true };
+    const updatedDoc = {
+      $set: {
+        isVerified: true,
+      },
+    };
+    const result = await usersCollection.updateOne(filter, updatedDoc, option);
+    res.send(result);
+  } catch (error) {
+    console.error(error.message);
+  }
 });
 
 // user post to db
@@ -236,21 +245,29 @@ app.post("/bookings", async (req, res) => {
 
 // get booking by email
 app.get("/bookings", async (req, res) => {
-  const email = req.query.email;
-  const query = { buyerEmail: email };
-  const result = await bookingsCollection.find(query).toArray();
-  res.send(result);
+  try {
+    const email = req.query.email;
+    const query = { buyerEmail: email };
+    const result = await bookingsCollection.find(query).toArray();
+    res.send(result);
+  } catch (error) {
+    console.error(error.message);
+  }
 });
 // advertise post
 app.post("/advertises", async (req, res) => {
-  const advertiseProduct = req.body;
-  const query = { productName: advertiseProduct.productName };
-  const alreadyAdvertised = await advertiesCollection.findOne(query);
-  if (alreadyAdvertised) {
-    return res.send({ alreadyAdvertised, message: "Already Advertised" });
+  try {
+    const advertiseProduct = req.body;
+    const query = { productName: advertiseProduct.productName };
+    const alreadyAdvertised = await advertiesCollection.findOne(query);
+    if (alreadyAdvertised) {
+      return res.send({ alreadyAdvertised, message: "Already Advertised" });
+    }
+    const result = await advertiesCollection.insertOne(advertiseProduct);
+    res.send(result);
+  } catch (error) {
+    console.error(error.message);
   }
-  const result = await advertiesCollection.insertOne(advertiseProduct);
-  res.send(result);
 });
 // adverties get
 app.get("/advertises", async (req, res) => {
@@ -264,6 +281,24 @@ app.get("/advertises", async (req, res) => {
     console.error(error.message);
   }
 });
+
+// post reported item
+app.post("/reporteditem", async (req, res) => {
+  try {
+    const reportedData = req.body;
+    const query = { productId: reportedData.productId };
+    const alreadyReported = await reportedItemCollection.findOne(query);
+    if (alreadyReported) {
+      return res.send({ message: "This product is already reported" });
+    } else {
+      const result = await reportedItemCollection.insertOne(reportedData);
+      res.send(result);
+    }
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
 app.listen(port, () => {
   console.log(`server running on ${port}`);
 });
