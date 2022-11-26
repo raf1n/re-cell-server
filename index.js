@@ -28,6 +28,7 @@ const categoriesCollection = client.db("reCell").collection("categories");
 const productsCollection = client.db("reCell").collection("products");
 const usersCollection = client.db("reCell").collection("users");
 const bookingsCollection = client.db("reCell").collection("bookings");
+const advertiesCollection = client.db("reCell").collection("advertises");
 
 // get all users
 app.get("/users", async (req, res) => {
@@ -43,6 +44,11 @@ app.get("/users", async (req, res) => {
 app.post("/users", async (req, res) => {
   try {
     const user = req.body;
+    const query = { userEmail: user.userEmail };
+    const alreadyAUser = await usersCollection.findOne(query);
+    if (alreadyAUser) {
+      return;
+    }
     const result = await usersCollection.insertOne(user);
     res.send(result);
   } catch (error) {
@@ -174,7 +180,29 @@ app.get("/bookings", async (req, res) => {
   const result = await bookingsCollection.find(query).toArray();
   res.send(result);
 });
-
+// advertise post
+app.post("/advertises", async (req, res) => {
+  const advertiseProduct = req.body;
+  const query = { productName: advertiseProduct.productName };
+  const alreadyAdvertised = await advertiesCollection.findOne(query);
+  if (alreadyAdvertised) {
+    return res.send({ alreadyAdvertised, message: "Already Advertised" });
+  }
+  const result = await advertiesCollection.insertOne(advertiseProduct);
+  res.send(result);
+});
+// adverties get
+app.get("/advertises", async (req, res) => {
+  try {
+    const result = await advertiesCollection
+      .find({})
+      .sort({ postedDate: -1 })
+      .toArray();
+    res.send(result);
+  } catch (error) {
+    console.error(error.message);
+  }
+});
 app.listen(port, () => {
   console.log(`server running on ${port}`);
 });
