@@ -46,14 +46,19 @@ app.get("/users", async (req, res) => {
   }
 });
 
-// get all sellers
-// app.get("/sellers", async (req, res) => {
-//   const role = req.query.role;
-//   console.log(role);
-//   const query = { role: role };
-//   const result = await usersCollection.find(query).toArray();
-//   res.send(result);
-// });
+// make verified
+app.put("/users/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: ObjectId(id) };
+  const option = { upsert: true };
+  const updatedDoc = {
+    $set: {
+      isVerified: true,
+    },
+  };
+  const result = await usersCollection.updateOne(filter, updatedDoc, option);
+  res.send(result);
+});
 
 // user post to db
 app.post("/users", async (req, res) => {
