@@ -33,12 +33,27 @@ const advertiesCollection = client.db("reCell").collection("advertises");
 // get all users
 app.get("/users", async (req, res) => {
   try {
+    const role = req.query.role;
+    if (role) {
+      const query = { role: role };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    }
     const users = await usersCollection.find({}).toArray();
     res.send(users);
   } catch (error) {
     console.error(error);
   }
 });
+
+// get all sellers
+// app.get("/sellers", async (req, res) => {
+//   const role = req.query.role;
+//   console.log(role);
+//   const query = { role: role };
+//   const result = await usersCollection.find(query).toArray();
+//   res.send(result);
+// });
 
 // user post to db
 app.post("/users", async (req, res) => {
