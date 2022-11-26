@@ -45,7 +45,17 @@ app.get("/users", async (req, res) => {
     console.error(error);
   }
 });
-
+// get single user
+app.get("/user", async (req, res) => {
+  try {
+    const email = req.query.email;
+    const query = { userEmail: email };
+    const result = await usersCollection.findOne(query);
+    res.send(result);
+  } catch (error) {
+    console.error(error);
+  }
+});
 // make verified
 app.put("/users/:id", async (req, res) => {
   const id = req.params.id;
