@@ -299,6 +299,37 @@ app.post("/reporteditem", async (req, res) => {
   }
 });
 
+// get reported items
+app.get("/reporteditem", async (req, res) => {
+  try {
+    const result = await reportedItemCollection.find({}).toArray();
+    res.send(result);
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+// delete reported item
+app.delete("/reportedItem/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const filter = { _id: ObjectId(id) };
+    const reportedItemCheck = await productsCollection.findOne(filter);
+    if (!reportedItemCheck) {
+      return res.send({ message: "Deleted" });
+    } else {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const allFilter = { productId: id };
+      const productResult = await productsCollection.deleteOne(filter);
+      const bookingResult = await bookingsCollection.deleteOne(allFilter);
+      const advertiseResult = await advertiesCollection.deleteOne(allFilter);
+      res.send({ productResult, bookingResult, advertiseResult });
+    }
+  } catch (error) {
+    console.error(error.message);
+  }
+});
 app.listen(port, () => {
   console.log(`server running on ${port}`);
 });
