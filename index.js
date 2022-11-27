@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 require("dotenv").config();
 const app = express();
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -23,15 +23,15 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 // get jwt
-app.get("/jwt", async (req, res) => {
+app.post("/jwt", async (req, res) => {
   try {
-    const email = req.query.email;
-    const query = { email: email };
-    const user = await usersCollection.findOne(query);
-    if (!user) {
+    const user = req.body;
+    const query = { userEmail: user.email };
+    const isUser = await usersCollection.findOne(query);
+    if (!isUser) {
       res.status(403).send({ message: "Forbidden Access" });
     } else {
-      const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, {
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "1d",
       });
       return res.send({ token });
@@ -41,6 +41,21 @@ app.get("/jwt", async (req, res) => {
   }
 });
 
+// get payment intent
+app.post("/create-payment-intent", async (req, res) => {
+  const order = req.body;
+  const price = order.productPrice;
+  const amount = parseFloat(price) * 100;
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    payment_method_types: ["card"],
+  });
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
+
 // collections
 const categoriesCollection = client.db("reCell").collection("categories");
 const productsCollection = client.db("reCell").collection("products");
@@ -48,6 +63,45 @@ const usersCollection = client.db("reCell").collection("users");
 const bookingsCollection = client.db("reCell").collection("bookings");
 const advertiesCollection = client.db("reCell").collection("advertises");
 const reportedItemCollection = client.db("reCell").collection("reporteditem");
+const paymentsCollection = client.db("reCell").collection("payments");
+
+// payment info adding
+app.put("/payments", async (req, res) => {
+  const payment = req.body;
+  const result = await paymentsCollection.insertOne(payment);
+  const bookingId = payment.bookingId;
+  const filterBooking = { _id: ObjectId(bookingId) };
+  const productId = payment.productId;
+  const filterProduct = { _id: ObjectId(productId) };
+
+  const options = { upsert: true };
+  const updatedDocBook = {
+    $set: {
+      paid: true,
+      transactionId: payment.transactionId,
+    },
+  };
+  const updatedDocProduct = {
+    $set: {
+      paid: true,
+      transactionId: payment.transactionId,
+    },
+  };
+
+  const updateResultBooking = await bookingsCollection.updateOne(
+    filterBooking,
+    updatedDocBook,
+    options
+  );
+  const updateResultProduct = await productsCollection.updateOne(
+    filterProduct,
+    updatedDocProduct,
+    options
+  );
+  const filter = { productId: payment.productId };
+  const adDelete = await advertiesCollection.deleteOne(filter);
+  res.send(result);
+});
 
 // get all users
 app.get("/users", async (req, res) => {
@@ -163,7 +217,7 @@ app.get("/categories", async (req, res) => {
 app.get("/categories/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const query = { categoryId: id };
+    const query = { categoryId: id, paid: false };
     const result = await productsCollection.find(query).toArray();
     res.send({
       status: "success",
@@ -254,6 +308,13 @@ app.get("/bookings", async (req, res) => {
     console.error(error.message);
   }
 });
+
+app.get("/bookings/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: ObjectId(id) };
+  const result = await bookingsCollection.findOne(query);
+  res.send(result);
+});
 // advertise post
 app.post("/advertises", async (req, res) => {
   try {
@@ -273,7 +334,7 @@ app.post("/advertises", async (req, res) => {
 app.get("/advertises", async (req, res) => {
   try {
     const result = await advertiesCollection
-      .find({})
+      .find({ paid: false })
       .sort({ postedDate: -1 })
       .toArray();
     res.send(result);
@@ -330,6 +391,7 @@ app.delete("/reportedItem/:id", async (req, res) => {
     console.error(error.message);
   }
 });
+
 app.listen(port, () => {
   console.log(`server running on ${port}`);
 });
