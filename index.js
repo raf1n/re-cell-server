@@ -17,6 +17,7 @@ app.get("/", (req, res) => {
 // mongodb connection
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.gghczmk.mongodb.net/?retryWrites=true&w=majority`;
 
+// verify JWT
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -196,7 +197,7 @@ app.post("/users", async (req, res) => {
 });
 
 // seller role get
-app.get("/users/seller/:email", async (req, res) => {
+app.get("/users/seller/:email", verifyJWT, async (req, res) => {
   try {
     const email = req.params.email;
     const decodedEmail = req.decoded.email;
@@ -212,7 +213,7 @@ app.get("/users/seller/:email", async (req, res) => {
 });
 
 //  admin role get
-app.get("/users/admin/:email", async (req, res) => {
+app.get("/users/admin/:email", verifyJWT, async (req, res) => {
   try {
     const email = req.params.email;
     const decodedEmail = req.decoded.email;
