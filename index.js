@@ -17,7 +17,6 @@ app.get("/", (req, res) => {
 // mongodb connection
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.gghczmk.mongodb.net/?retryWrites=true&w=majority`;
 
-// verify JWT
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -136,13 +135,9 @@ app.get("/users", verifyJWT, async (req, res) => {
   }
 });
 // get single user
-app.get("/user", verifyJWT, async (req, res) => {
+app.get("/user", async (req, res) => {
   try {
     const email = req.query.email;
-    const decodedEmail = req.decoded.email;
-    if (email !== decodedEmail) {
-      return res.send.status(403).send({ message: "Forbidden Access" });
-    }
     const query = { userEmail: email };
     const result = await usersCollection.findOne(query);
     res.send(result);
@@ -163,7 +158,7 @@ app.delete("/user/:email", verifyJWT, async (req, res) => {
 });
 
 // make verified
-app.put("/users/:id", verifyJWT, async (req, res) => {
+app.put("/users/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const filter = { _id: ObjectId(id) };
@@ -197,13 +192,9 @@ app.post("/users", async (req, res) => {
 });
 
 // seller role get
-app.get("/users/seller/:email", verifyJWT, async (req, res) => {
+app.get("/users/seller/:email", async (req, res) => {
   try {
     const email = req.params.email;
-    const decodedEmail = req.decoded.email;
-    if (email !== decodedEmail) {
-      return res.send.status(403).send({ message: "Forbidden Access" });
-    }
     const query = { userEmail: email };
     const user = await usersCollection.findOne(query);
     res.send({ isSeller: user?.role === "Seller" });
@@ -213,13 +204,9 @@ app.get("/users/seller/:email", verifyJWT, async (req, res) => {
 });
 
 //  admin role get
-app.get("/users/admin/:email", verifyJWT, async (req, res) => {
+app.get("/users/admin/:email", async (req, res) => {
   try {
     const email = req.params.email;
-    const decodedEmail = req.decoded.email;
-    if (email !== decodedEmail) {
-      return res.send.status(403).send({ message: "Forbidden Access" });
-    }
     const query = { userEmail: email };
     const user = await usersCollection.findOne(query);
     res.send({ isAdmin: user?.role === "Admin" });
@@ -359,7 +346,7 @@ app.post("/advertises", verifyJWT, async (req, res) => {
   }
 });
 // adverties get
-app.get("/advertises", verifyJWT, async (req, res) => {
+app.get("/advertises", async (req, res) => {
   try {
     const result = await advertiesCollection
       .find({ paid: false })
